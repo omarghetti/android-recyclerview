@@ -18,43 +18,57 @@ package com.example.android.trackmysleepquality.sleeptracker
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.example.android.trackmysleepquality.R
-import com.example.android.trackmysleepquality.TextItemViewHolder
 import com.example.android.trackmysleepquality.database.SleepNight
+import com.example.android.trackmysleepquality.databinding.ListItemSleepNightBinding
+import com.example.android.trackmysleepquality.sleeptracker.SleepNightAdapter.ViewHolder.Companion.from
 
-class SleepNightAdapter : RecyclerView.Adapter<TextItemViewHolder>() {
+class SleepNightAdapter(val sleepNightClickListener: SleepNightClickListener) : androidx.recyclerview.widget.ListAdapter<SleepNight,SleepNightAdapter.ViewHolder>(SleepNightDiffCallback()) {
 
-    var data = listOf<SleepNight>()
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
-
-    override fun getItemCount() = data.size
-
-    override fun onBindViewHolder(holder: TextItemViewHolder, position: Int) {
-        val item = data[position]
-        holder.textView.text = item.sleepQuality.toString()
-
-        // TODO (01) Add an if block and set the sleep quality to red
-        // if sleepQuality is 1 or less.
-
-        // TODO (02) Run the app and see that color does not reset to black.
-
-        // TODO (03) Add an else clause and reset the color if sleepQuality is 2 or higher.
-
-        // TODO (04) Run the app again and verify that the color displays correctly
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(sleepNightClickListener,getItem(position)!!)
         // for all sleepQuality values.
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TextItemViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        return from(parent)
+    }
 
-        val layoutInflater = LayoutInflater.from(parent.context)
-        val view = layoutInflater
-                .inflate(R.layout.text_item_view, parent, false) as TextView
+    class ViewHolder private constructor(val binding: ListItemSleepNightBinding): RecyclerView.ViewHolder(binding.root) {
 
-        return TextItemViewHolder(view)
+        fun bind(
+            clickListener: SleepNightClickListener,
+            item: SleepNight
+        ) {
+            binding.sleep = item
+            binding.clickListener = clickListener
+            binding.executePendingBindings()
+        }
+
+        companion object {
+            fun from(parent: ViewGroup): ViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ListItemSleepNightBinding.inflate(layoutInflater, parent, false)
+                return ViewHolder(binding)
+            }
+        }
+    }
+}
+
+class SleepNightDiffCallback : DiffUtil.ItemCallback<SleepNight>() {
+    override fun areItemsTheSame(oldItem: SleepNight, newItem: SleepNight): Boolean {
+        return oldItem.nightId == newItem.nightId
+    }
+
+    override fun areContentsTheSame(oldItem: SleepNight, newItem: SleepNight): Boolean {
+        return oldItem == newItem
+    }
+
+}
+
+class SleepNightClickListener(val clickListener: (sleepId: Long) -> Unit) {
+    fun onClick(night: SleepNight) {
+        clickListener(night.nightId)
     }
 }
